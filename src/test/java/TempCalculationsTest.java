@@ -38,8 +38,8 @@ public class TempCalculationsTest {
                 RowFactory.create("1990-02-01", "Russia", "Moscow", 7.0));
         DataFrame testFrame = sqlContext.createDataFrame(data, tempByCitiesSchema);
 
-        assertEquals(TempCalculations.calculateTempStatsForCities(testFrame).collectAsList(), Arrays.asList(
-                RowFactory.create("Russia", "Moscow", 1990, 5.0, 3.0, 7.0, 5.0, 3.0, 7.0, 5.0, 3.0, 7.0)
+        assertEquals(TempCalculations.calculateTempStatsFor(testFrame, "AverageTemperature", "Country", "City").collectAsList(), Arrays.asList(
+                RowFactory.create(1990, "Russia", "Moscow",5.0, 3.0, 7.0, 5.0, 3.0, 7.0, 5.0, 3.0, 7.0)
         ));
     }
 
@@ -50,8 +50,8 @@ public class TempCalculationsTest {
                 RowFactory.create("1990-02-01", "Russia", 7.0));
         DataFrame testFrame = sqlContext.createDataFrame(data, tempByCountriesSchema);
 
-        assertEquals(TempCalculations.calculateTempStatsForCountries(testFrame).collectAsList(), Arrays.asList(
-                RowFactory.create("Russia", 1990, 5.0, 3.0, 7.0, 5.0, 3.0, 7.0, 5.0, 3.0, 7.0)
+        assertEquals(TempCalculations.calculateTempStatsFor(testFrame,"AverageTemperature","Country").collectAsList(), Arrays.asList(
+                RowFactory.create( 1990, "Russia", 5.0, 3.0, 7.0, 5.0, 3.0, 7.0, 5.0, 3.0, 7.0)
         ));
     }
 
@@ -62,7 +62,7 @@ public class TempCalculationsTest {
                 RowFactory.create("1990-02-01", 7.0));
         DataFrame testFrame = sqlContext.createDataFrame(data, globalTempSchema);
 
-        assertEquals(TempCalculations.calculateTempStatsForWorld(testFrame).collectAsList(), Arrays.asList(
+        assertEquals(TempCalculations.calculateTempStatsFor(testFrame,  "LandAverageTemperature").collectAsList(), Arrays.asList(
                 RowFactory.create(1990, 5.0, 3.0, 7.0, 5.0, 3.0, 7.0, 5.0, 3.0, 7.0)
         ));
     }

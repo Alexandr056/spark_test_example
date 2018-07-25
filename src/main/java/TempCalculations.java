@@ -1,10 +1,6 @@
-import com.google.common.collect.ImmutableList;
-import org.apache.spark.sql.Column;
 import org.apache.spark.sql.DataFrame;
 import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.expressions.WindowSpec;
-
-import java.util.stream.Stream;
 
 import static org.apache.spark.sql.functions.*;
 import static org.apache.spark.sql.functions.col;
@@ -15,6 +11,7 @@ public class TempCalculations {
         DataFrame statsForCities = calculateTempStatsForCities(tempByCity);
         DataFrame statsForCountries = calculateTempStatsForCountries(tempByCountry);
         DataFrame statsForWorld = calculateTempStatsForWorld(tempByWorld);
+
 
         return joinTempStats(
                 statsForCities,
@@ -62,13 +59,11 @@ public class TempCalculations {
                 .join(statsForWorld,statsForCities.col("year").equalTo(statsForWorld.col("year")));
     }
 
-    public static DataFrame calculateTempStatsFor(DataFrame tempData, ImmutableList<Column> groupingBy, String avgTempColumnName) {
-        WindowSpec yearWindow = Window.partitionBy(
-                Stream.concat(groupingBy.stream(), Stream.of(col("year"))).toArray(Column[]::new));
-        WindowSpec decadeWindow = Window.partitionBy(
-                Stream.concat(groupingBy.stream(), Stream.of(col("10_years"))).toArray(Column[]::new));
-        WindowSpec ageWindow = Window.partitionBy(
-                Stream.concat(groupingBy.stream(), Stream.of(col("100_years"))).toArray(Column[]::new));
+
+    public static DataFrame calculateTempStatsFor(DataFrame tempData, String avgTempColumnName, String... groupingBy) {
+        WindowSpec yearWindow = Window.partitionBy("year", groupingBy);
+        WindowSpec decadeWindow = Window.partitionBy("10_years",groupingBy);
+        WindowSpec ageWindow = Window.partitionBy("100_years",groupingBy);
 
         return tempData
                 .withColumn("date", col("dt").cast("date"))
@@ -84,7 +79,7 @@ public class TempCalculations {
                 .withColumn("avg_century", avg(col(avgTempColumnName)).over(ageWindow))
                 .withColumn("min_century", min(col(avgTempColumnName)).over(ageWindow))
                 .withColumn("max_century", max(col(avgTempColumnName)).over(ageWindow))
-                .groupBy(Stream.concat(groupingBy.stream(), Stream.of(col("year"))).toArray(Column[]::new))
+                .groupBy("year", groupingBy)
                 .agg(first(col("avg_year")).as("avg_year"),
                         first(col("min_year")).as("min_year"),
                         first(col("max_year")).as("max_year"),
@@ -94,19 +89,19 @@ public class TempCalculations {
                         first(col("avg_century")).as("avg_century"),
                         first(col("min_century")).as("min_century"),
                         first(col("max_century")).as("max_century"))
-                .orderBy(Stream.concat(groupingBy.stream(), Stream.of(col("year"))).toArray(Column[]::new));
+                .orderBy("year",groupingBy);
 
     }
-
     public static DataFrame calculateTempStatsForWorld(DataFrame tempByWorld){
-        return calculateTempStatsFor(tempByWorld, ImmutableList.of(), "LandAverageTemperature");
-    }
-
-    public static DataFrame calculateTempStatsForCities(DataFrame tempByCity) {
-        return calculateTempStatsFor(tempByCity, ImmutableList.of(col("Country"), col("City")), "AverageTemperature");
+        return calculateTempStatsFor(tempByWorld, "LandAverageTemperature");
     }
 
     public static DataFrame calculateTempStatsForCountries(DataFrame tempByCountry) {
-        return calculateTempStatsFor(tempByCountry, ImmutableList.of(col("Country")), "AverageTemperature");
+        return calculateTempStatsFor(tempByCountry, "AverageTemperature","Country");
     }
+
+    public static DataFrame calculateTempStatsForCities(DataFrame tempByCity) {
+        return calculateTempStatsFor(tempByCity,  "AverageTemperature","Country", "City");
+    }
+
 }

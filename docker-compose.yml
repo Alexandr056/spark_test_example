@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+
+  app:
+    build: .
+
+  run-app:
+    image: spark_kaggle_tempereture_data_app:latest
+    hostname: quickstart.cloudera
+    privileged: True
